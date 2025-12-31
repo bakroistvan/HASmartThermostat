@@ -1097,10 +1097,11 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             self._control_output = self._pid_autotune.output
             self._p = self._i = self._d = error = self._dt = 0
         else:
-            if abs(self._current_temp - self._target_temp) > self._auto_boost_tol:
-                await self.async_set_pid_mode(mode="off")
-            else:
-                await self.async_set_pid_mode(mode="auto")
+            if self._auto_boost_tol > 0:
+                if abs(self._current_temp - self._target_temp) > self._auto_boost_tol:
+                    await self.async_set_pid_mode(mode="off")
+                else:
+                    await self.async_set_pid_mode(mode="auto")
 
 
             if self._pid_controller.sampling_period == 0:
