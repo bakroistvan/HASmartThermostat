@@ -131,6 +131,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(const.CONF_PWM, default=const.DEFAULT_PWM): vol.All(
             cv.time_period, cv.positive_timedelta
         ),
+        vol.Optional(const.CONF_AUTO_BOOST_TOL, default=0): vol.Coerce(float),
         vol.Optional(const.CONF_BOOST_PID_OFF, default=False): cv.boolean,
         vol.Optional(const.CONF_AUTOTUNE, default=const.DEFAULT_AUTOTUNE): cv.string,
         vol.Optional(const.CONF_NOISEBAND, default=const.DEFAULT_NOISEBAND): vol.Coerce(float),
@@ -193,6 +194,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         'kd': config.get(const.CONF_KD),
         'ke': config.get(const.CONF_KE),
         'pwm': config.get(const.CONF_PWM),
+        'auto_boost_tol': config.get(const.CONF_AUTO_BOOST_TOL),
         'boost_pid_off': config.get(const.CONF_BOOST_PID_OFF),
         'autotune': config.get(const.CONF_AUTOTUNE),
         'noiseband': config.get(const.CONF_NOISEBAND),
@@ -340,6 +342,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         self._control_output = self._output_min
         self._force_on = False
         self._force_off = False
+        self._auto_boost_tol = kwargs.get('auto_boost_tol')
         self._boost_pid_off = kwargs.get('boost_pid_off')
         self._autotune = kwargs.get('autotune').lower()
         if self._autotune.lower() not in [
@@ -1093,6 +1096,12 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             self._control_output = self._pid_autotune.output
             self._p = self._i = self._d = error = self._dt = 0
         else:
+            if abs(self._current_temp - self._target_temp) > self._auto_boost_tol:
+                await self.async_set_pid_mode(mode="off")
+            else:
+                await self.async_set_pid_mode(mode="auto")
+
+
             if self._pid_controller.sampling_period == 0:
                 self._control_output, update = self._pid_controller.calc(self._current_temp,
                                                                          self._target_temp,
