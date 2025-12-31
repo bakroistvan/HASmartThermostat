@@ -131,7 +131,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(const.CONF_PWM, default=const.DEFAULT_PWM): vol.All(
             cv.time_period, cv.positive_timedelta
         ),
-        vol.Optional(const.CONF_AUTO_BOOST_TOL, default=0): vol.Coerce(float),
+        vol.Optional(const.CONF_AUTO_BOOST_TOL, default=0.0): vol.Coerce(float),
         vol.Optional(const.CONF_BOOST_PID_OFF, default=False): cv.boolean,
         vol.Optional(const.CONF_AUTOTUNE, default=const.DEFAULT_AUTOTUNE): cv.string,
         vol.Optional(const.CONF_NOISEBAND, default=const.DEFAULT_NOISEBAND): vol.Coerce(float),
@@ -1099,9 +1099,9 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         else:
             if self._auto_boost_tol > 0:
                 if abs(self._current_temp - self._target_temp) > self._auto_boost_tol:
-                    await self.async_set_pid_mode(mode="off")
+                    self._pid_controller.mode = "OFF"
                 else:
-                    await self.async_set_pid_mode(mode="auto")
+                    self._pid_controller.mode = "AUTO"
 
 
             if self._pid_controller.sampling_period == 0:
