@@ -686,6 +686,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                 "pid_d": 0 if self._autotune != "none" else self.pid_control_d,
                 "pid_e": 0 if self._autotune != "none" else self.pid_control_e,
                 "pid_dt": 0 if self._autotune != "none" else self._dt,
+                "auto_boost_tol": self._auto_boost_tol,
             })
 
         if self._autotune != "none":
