@@ -726,7 +726,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         if self._pid_controller:
             self._pid_controller.out_max = self._max_out
             self._pid_controller.out_min = self._min_out
-            await self.clear_integral()
+            self.clear_integral()
         self._time_changed = 0
         self.pi
 
