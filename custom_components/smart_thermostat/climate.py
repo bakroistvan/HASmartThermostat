@@ -1102,6 +1102,10 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     self._pid_controller.mode = "OFF"
                 else:
                     self._pid_controller.mode = "AUTO"
+                    # preset Integrate with the calculated output percent after boost time
+                    time_passed = time.time() - self._time_changed
+                    self._pid_controller.integral = time_passed / self._pwm
+                    self._i = self._pid_controller.integral
 
 
             if self._pid_controller.sampling_period == 0:
