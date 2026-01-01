@@ -342,6 +342,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         self._control_output = self._output_min
         self._force_on = False
         self._force_off = False
+        self._auto_boost_on = False
         self._auto_boost_tol = kwargs.get('auto_boost_tol')
         self._boost_pid_off = kwargs.get('boost_pid_off')
         self._autotune = kwargs.get('autotune').lower()
@@ -1098,15 +1099,17 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             self._p = self._i = self._d = error = self._dt = 0
         else:
             if self._auto_boost_tol > 0:
-                if abs(self._current_temp - self._target_temp) > self._auto_boost_tol:
+                if self._auto_boost_on == False and abs(self._current_temp - self._target_temp) > self._auto_boost_tol:
+                    self._auto_boost_on = True
                     self._pid_controller.mode = "OFF"
-                else:
+                elif self._auto_boost_on == True and abs(self._current_temp - self._target_temp) < self._auto_boost_tol:
+                    self._auto_boost_on = False
                     self._pid_controller.mode = "AUTO"
                     # preset Integrate with the calculated output percent after boost time
                     time_passed = time.time() - self._time_changed
                     _LOGGER.debug(f"{self._time_changed=}, {time.time()=}, {time_passed=}, {self._pwm=}")
 
-                    self._pid_controller.integral = time_passed / self._pwm
+                    self._pid_controller.integral = 100 * time_passed / self._pwm
                     self._i = self._pid_controller.integral
                     _LOGGER.debug(f"presetting self._i with {self._i}")
 
