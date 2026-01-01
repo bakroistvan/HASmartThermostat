@@ -726,6 +726,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         if self._pid_controller:
             self._pid_controller.out_max = self._max_out
             self._pid_controller.out_min = self._min_out
+        self._time_changed = 0
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
@@ -1102,6 +1103,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                 if self._auto_boost_on == False and abs(self._current_temp - self._target_temp) > self._auto_boost_tol:
                     self._auto_boost_on = True
                     self._pid_controller.mode = "OFF"
+                    _LOGGER.debug(f"/auto boost/ turned ON")
                 elif self._auto_boost_on == True and abs(self._current_temp - self._target_temp) < self._auto_boost_tol:
                     self._auto_boost_on = False
                     self._pid_controller.mode = "AUTO"
@@ -1109,9 +1111,11 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     time_passed = time.time() - self._time_changed
                     _LOGGER.debug(f"{self._time_changed=}, {time.time()=}, {time_passed=}, {self._pwm=}")
 
-                    self._pid_controller.integral = 100 * time_passed / self._pwm
-                    self._i = self._pid_controller.integral
-                    _LOGGER.debug(f"presetting self._i with {self._i}")
+                    # only if heating
+                    if self._current_temp < self._target_temp:
+                        self._pid_controller.integral = 100 * time_passed / self._pwm
+                        self._i = self._pid_controller.integral
+                        _LOGGER.debug(f"/auto boost/ presetting self._i with {self._i}")
 
 
             if self._pid_controller.sampling_period == 0:
