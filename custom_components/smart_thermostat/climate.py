@@ -728,7 +728,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             self._pid_controller.out_min = self._min_out
             self.clear_integral()
         self._time_changed = 0
-        self.pi
+        self.clear_integral()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
