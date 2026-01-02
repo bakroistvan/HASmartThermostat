@@ -1130,11 +1130,12 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     self._auto_boost_on = True
                     # ON time due to (error - tol) / slew rate
                     on_time = (self._target_temp - self._auto_boost_tol/2 - self._current_temp) / 0.0417 # 2.5 degC/min = 0.0417 degC/sec
-                    additional_i = on_time / self._pwm
+                    additional_i = 100 * on_time / self._pwm
                     
                     self._pid_controller.integral = self._pid_controller.integral + additional_i
                     self._i = self._pid_controller.integral
 
+                    _LOGGER.debug(f"{self._target_temp=}, {self._current_temp=}, {self._auto_boost_tol}, {on_time=}")
                     _LOGGER.debug(f"/auto boost/ adding {additional_i}, yielding {self._i=}")
                 elif self._auto_boost_on == True and (self._target_temp - self._current_temp) < self._auto_boost_tol:
                     # in PID range 
