@@ -1135,7 +1135,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     self._pid_controller.integral = self._pid_controller.integral + additional_i
                     self._i = self._pid_controller.integral
 
-                    _LOGGER.debug(f"/auto boost/ adding {additional_in}, yielding {self._i=}")
+                    _LOGGER.debug(f"/auto boost/ adding {additional_i}, yielding {self._i=}")
                 elif self._auto_boost_on == True and (self._target_temp - self._current_temp) < self._auto_boost_tol:
                     # in PID range 
                     self._auto_boost_on = False
