@@ -1129,7 +1129,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     # lots of heating to do
                     self._auto_boost_on = True
                     # ON time due to (error - tol) / slew rate
-                    on_time = (self._pid_controller.error - self._auto_boost_tol/2) / 150 # 2.5 degC/min = 150 degC/sec
+                    on_time = (self._target_temp - self._auto_boost_tol/2 - self._current_temp) / 0.0417 # 2.5 degC/min = 0.0417 degC/sec
                     additional_i = on_time / self._pwm
                     
                     self._pid_controller.integral = self._pid_controller.integral + additional_i
