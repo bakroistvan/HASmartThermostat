@@ -135,6 +135,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(const.CONF_PWM, default=const.DEFAULT_PWM): vol.All(
             cv.time_period, cv.positive_timedelta
         ),
+        vol.Optional(const.CONF_HEATING_SLOPE): vol.Coerce(float),
         vol.Optional(const.CONF_AUTO_BOOST_TOL, default=0.0): vol.Coerce(float),
         vol.Optional(const.CONF_BOOST_PID_OFF, default=False): cv.boolean,
         vol.Optional(const.CONF_AUTOTUNE, default=const.DEFAULT_AUTOTUNE): cv.string,
@@ -198,6 +199,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         'kd': config.get(const.CONF_KD),
         'ke': config.get(const.CONF_KE),
         'pwm': config.get(const.CONF_PWM),
+        'heating_slope': config.get(const.CONF_HEATING_SLOPE),
         'auto_boost_tol': config.get(const.CONF_AUTO_BOOST_TOL),
         'boost_pid_off': config.get(const.CONF_BOOST_PID_OFF),
         'autotune': config.get(const.CONF_AUTOTUNE),
@@ -346,6 +348,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         self._control_output = self._output_min
         self._force_on = False
         self._force_off = False
+        self._heating_slope = kwargs.get('heating_slope')
         self._auto_boost_on = False
         self._auto_boost_tol = kwargs.get('auto_boost_tol')
         self._boost_pid_off = kwargs.get('boost_pid_off')
@@ -1129,13 +1132,15 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     # lots of heating to do
                     self._auto_boost_on = True
                     # ON time due to (error - tol) / slew rate
-                    on_time = (self._target_temp - self._auto_boost_tol/2 - self._current_temp) / 0.0417 # 2.5 degC/min = 0.0417 degC/sec
+                    # 2.5 degC/min = 0.0417 degC/sec
+                    # 6 degC/min = 0.1 degC/sec
+                    on_time = (self._target_temp - self._auto_boost_tol/2 - self._current_temp) / self._heating_slope
                     additional_i = 100 * on_time / self._pwm
                     
                     self._pid_controller.integral = self._pid_controller.integral + additional_i
                     self._i = self._pid_controller.integral
 
-                    _LOGGER.debug(f"{self._target_temp=}, {self._current_temp=}, {self._auto_boost_tol}, {on_time=}")
+                    _LOGGER.debug(f"/auto boost/ {self._target_temp=}, {self._current_temp=}, {self._auto_boost_tol}, {on_time=}")
                     _LOGGER.debug(f"/auto boost/ adding {additional_i}, yielding {self._i=}")
                 elif self._auto_boost_on == True and (self._target_temp - self._current_temp) < self._auto_boost_tol:
                     # in PID range 
