@@ -1042,6 +1042,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                     data)
             elif heater_or_cooler_entity[0:8] == 'climate.':
                 state = self.hass.states.get(heater_or_cooler_entity).state
+                _LOGGER.debug(f"{state=}")
                 if hvac_mode != state:
                     data = {ATTR_ENTITY_ID: heater_or_cooler_entity, ATTR_HVAC_MODE: hvac_mode}
                     await self.hass.services.async_call(
