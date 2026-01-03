@@ -225,7 +225,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     platform.async_register_entity_service(  # type: ignore
         "set_integral",
         {
-            vol.Optional("I"): vol.Coerce(float),
+            vol.Optional("integral"): vol.Coerce(float),
         },
         "async_set_integral",
     )
@@ -820,7 +820,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
     
     async def async_set_integral(self, **kwargs):
         """Set Integral part."""
-        integral = kwargs.get('I', None)
+        integral = kwargs.get('integral', None)
         self._pid_controller.integral = integral
         self._i = self._pid_controller.integral
         await self._async_control_heating(calc_pid=True)
