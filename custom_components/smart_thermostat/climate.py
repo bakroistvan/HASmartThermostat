@@ -225,7 +225,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     platform.async_register_entity_service(  # type: ignore
         "set_integral",
         {
-            vol.Optional("integral"): vol.Coerce(float),
+            vol.Required("integral"): vol.Coerce(float),
         },
         "async_set_integral",
     )
