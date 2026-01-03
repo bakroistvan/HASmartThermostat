@@ -349,7 +349,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         self._force_on = False
         self._force_off = False
         self._heating_slope = kwargs.get('heating_slope')
-        self._auto_boost_on = False
+        self._auto_boost_val = 0.0
         self._auto_boost_tol = kwargs.get('auto_boost_tol')
         self._boost_pid_off = kwargs.get('boost_pid_off')
         self._autotune = kwargs.get('autotune').lower()
@@ -1128,23 +1128,25 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             self._p = self._i = self._d = error = self._dt = 0
         else:
             if self._auto_boost_tol > 0:
-                if self._auto_boost_on == False and (self._target_temp - self._current_temp)  > self._auto_boost_tol:
+                if self._auto_boost_val == 0 and (self._target_temp - self._current_temp)  > self._auto_boost_tol:
                     # lots of heating to do
-                    self._auto_boost_on = True
                     # ON time due to (error - tol) / slew rate
                     # 2.5 degC/min = 0.0417 degC/sec
                     # 6 degC/min = 0.1 degC/sec
                     on_time = (self._target_temp - self._auto_boost_tol/2 - self._current_temp) / self._heating_slope
-                    additional_i = 100 * on_time / self._pwm
+                    self._auto_boost_val = 100 * on_time / self._pwm
                     
-                    self._pid_controller.integral = self._pid_controller.integral + additional_i
+                    self._pid_controller.integral = self._pid_controller.integral + self._auto_boost_val
                     self._i = self._pid_controller.integral
 
                     _LOGGER.debug(f"/auto boost/ {self._target_temp=}, {self._current_temp=}, {self._auto_boost_tol}, {on_time=}")
-                    _LOGGER.debug(f"/auto boost/ adding {additional_i}, yielding {self._i=}")
-                elif self._auto_boost_on == True and (self._target_temp - self._current_temp) < self._auto_boost_tol:
+                    _LOGGER.debug(f"/auto boost/ adding {self._auto_boost_val}, yielding {self._i=}")
+                elif self._auto_boost_val > 0 and (self._target_temp - self._current_temp) < self._auto_boost_tol:
                     # in PID range 
-                    self._auto_boost_on = False
+                    self._pid_controller.integral = self._pid_controller.integral - self._auto_boost_val
+                    self._i = self._pid_controller.integral
+                    
+                    self._auto_boost_val = 0
 
             if self._pid_controller.sampling_period == 0:
                 self._control_output, update = self._pid_controller.calc(self._current_temp,
