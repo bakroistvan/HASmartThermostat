@@ -89,7 +89,7 @@ set_integral:
       integration: smart_thermostat
       domain: climate
   fields:
-    integrate:
+    integral:
       name: Integral
       description: Integral part
       required: true
