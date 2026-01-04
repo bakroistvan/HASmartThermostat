@@ -64,6 +64,7 @@ CONF_KD = "kd"
 CONF_KE = "ke"
 CONF_PWM = "pwm"
 CONF_HEATING_SLOPE = "heating_slope"
+CONF_AUTO_TOGGLE_OUTPUT = 'auto_toggle_output'
 CONF_AUTO_BOOST_TOL = 'auto_boost_tol'
 CONF_BOOST_PID_OFF = 'boost_pid_off'
 CONF_AUTOTUNE = "autotune"

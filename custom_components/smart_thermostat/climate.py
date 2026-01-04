@@ -135,6 +135,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(const.CONF_PWM, default=const.DEFAULT_PWM): vol.All(
             cv.time_period, cv.positive_timedelta
         ),
+        vol.Optional(const.CONF_AUTO_TOGGLE_OUTPUT, default=True): cv.boolean,
         vol.Optional(const.CONF_HEATING_SLOPE): vol.Coerce(float),
         vol.Optional(const.CONF_AUTO_BOOST_TOL, default=0.0): vol.Coerce(float),
         vol.Optional(const.CONF_BOOST_PID_OFF, default=False): cv.boolean,
@@ -199,6 +200,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         'kd': config.get(const.CONF_KD),
         'ke': config.get(const.CONF_KE),
         'pwm': config.get(const.CONF_PWM),
+        'auto_toggle_output': config.get(const.CONF_AUTO_TOGGLE_OUTPUT),
         'heating_slope': config.get(const.CONF_HEATING_SLOPE),
         'auto_boost_tol': config.get(const.CONF_AUTO_BOOST_TOL),
         'boost_pid_off': config.get(const.CONF_BOOST_PID_OFF),
@@ -357,6 +359,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         self._control_output = self._output_min
         self._force_on = False
         self._force_off = False
+        self._auto_toggle_output = kwargs.get('auto_toggle_output')
         self._heating_slope = kwargs.get('heating_slope')
         self._auto_boost_val = 0.0
         self._auto_boost_tol = kwargs.get('auto_boost_tol')
@@ -799,9 +802,9 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         if temperature is None:
             return
         if self._current_temp is not None and temperature > self._current_temp:
-            self._force_on = True
+            self._force_on = self._auto_toggle_output
         elif self._current_temp is not None and temperature < self._current_temp:
-            self._force_off = True
+            self._force_off = self._auto_toggle_output
         if temperature in self._preset_temp_modes and self._preset_sync_mode == 'sync':
             await self.async_set_preset_mode(self._preset_temp_modes[temperature])
         else:
