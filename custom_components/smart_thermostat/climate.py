@@ -795,9 +795,9 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             if self._integral_on_poweron == "clear":
                 await self.clear_integral()
             elif self._integral_on_poweron == "target":
-                await async_set_integral(integral = self._target_temp)
+                await self.async_set_integral(integral = self._target_temp)
             elif self._integral_on_poweron == "current":
-                await async_set_integral(integral = self._current_temp)
+                await self.async_set_integral(integral = self._current_temp)
         self._time_changed = 0
         if self._hvac_mode != HVACMode.OFF:
             await self._async_control_heating(calc_pid=True)
