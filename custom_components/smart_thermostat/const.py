@@ -63,6 +63,7 @@ CONF_KI = "ki"
 CONF_KD = "kd"
 CONF_KE = "ke"
 CONF_PWM = "pwm"
+CONF_INTEGRAL_ON_POWERON = "integral_on_poweron"
 CONF_HEATING_SLOPE = "heating_slope"
 CONF_AUTO_TOGGLE_OUTPUT = 'auto_toggle_output'
 CONF_AUTO_BOOST_TOL = 'auto_boost_tol'

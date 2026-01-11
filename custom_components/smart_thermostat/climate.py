@@ -135,6 +135,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(const.CONF_PWM, default=const.DEFAULT_PWM): vol.All(
             cv.time_period, cv.positive_timedelta
         ),
+        vol.Optional(const.CONF_INTEGRAL_ON_POWERON, default=""): cv.string,
         vol.Optional(const.CONF_AUTO_TOGGLE_OUTPUT, default=True): cv.boolean,
         vol.Optional(const.CONF_HEATING_SLOPE): vol.Coerce(float),
         vol.Optional(const.CONF_AUTO_BOOST_TOL, default=0.0): vol.Coerce(float),
@@ -200,6 +201,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         'kd': config.get(const.CONF_KD),
         'ke': config.get(const.CONF_KE),
         'pwm': config.get(const.CONF_PWM),
+        'integral_on_poweron': config.get(const.CONF_INTEGRAL_ON_POWERON),
         'auto_toggle_output': config.get(const.CONF_AUTO_TOGGLE_OUTPUT),
         'heating_slope': config.get(const.CONF_HEATING_SLOPE),
         'auto_boost_tol': config.get(const.CONF_AUTO_BOOST_TOL),
@@ -359,6 +361,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         self._control_output = self._output_min
         self._force_on = False
         self._force_off = False
+        self._integral_on_poweron = kwargs.get('integral_on_poweron')
         self._auto_toggle_output = kwargs.get('auto_toggle_output')
         self._heating_slope = kwargs.get('heating_slope')
         self._auto_boost_val = 0.0
@@ -789,7 +792,13 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         if self._pid_controller:
             self._pid_controller.out_max = self._max_out
             self._pid_controller.out_min = self._min_out
-            await self.clear_integral()
+            if self._integral_on_poweron == "clear":
+                await self.clear_integral()
+            elif self._integral_on_poweron == "target":
+                await async_set_integral(integral = self._current_temp)
+            elif isfloat(self._integral_on_poweron):
+                shift_i = float(self._integral_on_poweron)
+                await async_set_integral(integral = self._current_temp + shift_i)
         self._time_changed = 0
         if self._hvac_mode != HVACMode.OFF:
             await self._async_control_heating(calc_pid=True)
