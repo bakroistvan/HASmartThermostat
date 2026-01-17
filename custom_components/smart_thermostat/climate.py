@@ -792,19 +792,22 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         if self._pid_controller:
             self._pid_controller.out_max = self._max_out
             self._pid_controller.out_min = self._min_out
-            if self._integral_on_poweron == "clear":
-                await self.clear_integral()
-            elif self._integral_on_poweron == "target":
-                await self.async_set_integral(integral = self._target_temp)
-            elif self._integral_on_poweron == "current":
-                await self.async_set_integral(integral = self._current_temp)
-            elif self._integral_on_poweron == "current_10min":
-                if (self._last_off_time is not None and 
-                    time.time() - self._last_off_time <= 600):  # 10 minutes = 600 seconds
-                    # Use current temp if available, otherwise fallback to target
-                    await self.async_set_integral(integral = self._current_temp)
-                else:
+
+            if hvac_mode != HVACMode.OFF:
+                if self._integral_on_poweron == "clear":
+                    await self.clear_integral()
+                elif self._integral_on_poweron == "target":
                     await self.async_set_integral(integral = self._target_temp)
+                elif self._integral_on_poweron == "current":
+                    await self.async_set_integral(integral = self._current_temp)
+                elif self._integral_on_poweron == "current_10min":
+                    if (self._last_off_time is not None and 
+                        time.time() - self._last_off_time <= 600):  # 10 minutes = 600 seconds
+                        # Use current temp if available, otherwise fallback to target
+                        await self.async_set_integral(integral = self._current_temp)
+                    else:
+                        await self.async_set_integral(integral = self._target_temp)
+            
         self._time_changed = 0
         if self._hvac_mode != HVACMode.OFF:
             await self._async_control_heating(calc_pid=True)
