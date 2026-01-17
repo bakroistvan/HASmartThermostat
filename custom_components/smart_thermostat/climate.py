@@ -796,17 +796,11 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             if hvac_mode != HVACMode.OFF:
                 if self._integral_on_poweron == "clear":
                     await self.clear_integral()
-                elif self._integral_on_poweron == "target":
-                    await self.async_set_integral(integral = self._target_temp)
-                elif self._integral_on_poweron == "current":
-                    await self.async_set_integral(integral = self._current_temp)
-                elif self._integral_on_poweron == "current_10min":
-                    if (self._last_off_time is not None and 
-                        time.time() - self._last_off_time <= 600):  # 10 minutes = 600 seconds
-                        # Use current temp if available, otherwise fallback to target
-                        await self.async_set_integral(integral = self._current_temp)
-                    else:
+                elif self._integral_on_poweron == "target_temp_after_10min":
+                    if (self._last_off_time is not None and time.time() - self._last_off_time > 600):  # 10 minutes = 600 seconds
+                        # After 10 minutes: use target temp
                         await self.async_set_integral(integral = self._target_temp)
+                    # Within 10 minutes: do nothing (keep existing integral value)
             
         self._time_changed = 0
         if self._hvac_mode != HVACMode.OFF:
