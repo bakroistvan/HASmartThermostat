@@ -362,6 +362,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
         self._force_on = False
         self._force_off = False
         self._integral_on_poweron = kwargs.get('integral_on_poweron')
+        self._last_off_time = None
         self._auto_toggle_output = kwargs.get('auto_toggle_output')
         self._heating_slope = kwargs.get('heating_slope')
         self._auto_boost_val = 0.0
@@ -769,6 +770,7 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
             self._hvac_mode = HVACMode.HEAT_COOL
         elif hvac_mode == HVACMode.OFF:
             self._hvac_mode = HVACMode.OFF
+            self._last_off_time = time.time()
             self._control_output = self._output_min
             if self._pwm:
                 _LOGGER.debug("%s: Turn OFF heater from async_set_hvac_mode(%s)",
@@ -798,6 +800,13 @@ class SmartThermostat(ClimateEntity, RestoreEntity, ABC):
                 await self.async_set_integral(integral = self._target_temp)
             elif self._integral_on_poweron == "current":
                 await self.async_set_integral(integral = self._current_temp)
+            elif self._integral_on_poweron == "current_10min":
+                if (self._last_off_time is not None and 
+                    time.time() - self._last_off_time <= 600):  # 10 minutes = 600 seconds
+                    # Use current temp if available, otherwise fallback to target
+                    await self.async_set_integral(integral = self._current_temp)
+                else:
+                    await self.async_set_integral(integral = self._target_temp)
         self._time_changed = 0
         if self._hvac_mode != HVACMode.OFF:
             await self._async_control_heating(calc_pid=True)
